@@ -23,6 +23,9 @@ void dt_power_callback(const void *indata) {
 	}
     left_power = msg->data.data[0];
     right_power = msg->data.data[1];
+    char printbuff[30];
+    snprintf(printbuff, 30, "got new motor powers: %d %d", left_power, right_power);
+    uart_log(LEVEL_DEBUG, printbuff);
     dt_raw_last_update = time_us_64();
 }
 

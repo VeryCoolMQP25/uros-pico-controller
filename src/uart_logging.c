@@ -58,6 +58,12 @@ void uart_log(LogLevel level, char *message){
 	mutex_exit(&uart_mutex);
 }
 
+void uart_log_fatal(int linenum, int exitcode){
+	char tmpbuff[50];
+	snprintf(tmpbuff, 50, "Fatal error on line %d with code %d! Abort.", linenum, exitcode);
+	uart_log(LEVEL_ERROR, tmpbuff);
+}
+
 void uart_log_nonblocking(LogLevel level, char *message){
 	if(!mutex_try_enter(&uart_mutex, NULL)) {
 		return;

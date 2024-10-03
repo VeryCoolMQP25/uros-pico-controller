@@ -13,7 +13,7 @@ Motor lift_motor;
 //return index of next unallocated PIO state machine
 static int get_next_sm(){
 	// each bit represents availability of nth state machine
-	static char pioAvail = 0xff;
+	static uint8_t pioAvail = 0xff;
 	for (int i=0; i<8; i++){
 		// ith pio state machine is available
 		if ((pioAvail >> i) & 0x1){

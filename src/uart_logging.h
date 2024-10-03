@@ -31,6 +31,8 @@ void uart_log(LogLevel, char*);
 
 void uart_log_nonblocking(LogLevel, char*);
 
+void uart_log_fatal(int, int);
+
 bool uart_getline(char*);
 
 #endif

@@ -13,40 +13,41 @@
 #include "actuators.h"
 #include "controls.h"
 
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){uart_log_fatal(__LINE__,(int)temp_rc); return 1;}}
+
 // globals
 const char *namespace = "";
 // system states
-CommState comm_state = cs_disconnected;
+CommState comm_state = cs_connected;
 DriveMode drive_mode = dm_raw;
 
 int comm_fail_counter = 0;
 // onboard green LED
 const uint LED_PIN = 25;
 
+void amogus_cb(rcl_timer_t *timer, int64_t last_call_time)
+{
+	uart_log_nonblocking(LEVEL_DEBUG,"amogus");
+	return;
+	//TODO
+}
 
 void publish_all_cb(rcl_timer_t *timer, int64_t last_call_time)
 {
+	uart_send("p");
+	return;
 	//TODO
-    return;
 }
 
 // checks if we have comms with serial agent
-void check_connectivity(rcl_timer_t *timer, int64_t last_call_time){
-	bool ok = (rmw_uros_ping_agent(50, 1) == RCL_RET_OK);
+void check_connectivity(rcl_timer_t *timer, int64_t last_call_time)
+{
+	uart_log_nonblocking(LEVEL_DEBUG,"connectivity check run");
+	bool ok = (rmw_uros_ping_agent(30, 1) == RCL_RET_OK);
 	gpio_put(LED_PIN, ok);
 	if (!ok){
 		comm_state = cs_disconnected;
 	}
-}
-
-// creates and returns a timer, configuring it to call specified callback. Returns timer handle
-rcl_timer_t *create_timer_callback(rclc_executor_t *executor, rclc_support_t *support, uint period_ms, rcl_timer_callback_t cb)
-{
-	rcl_timer_t *timer = malloc(sizeof(rcl_timer_t));
-    rclc_timer_init_default(timer, support, RCL_MS_TO_NS(period_ms), cb);
-	rclc_executor_add_timer(executor, timer);
-	uart_log(LEVEL_DEBUG, "registered timer cb");
-	return timer;
 }
 
 void core1task(){
@@ -89,7 +90,7 @@ int main()
     uart_log(LEVEL_DEBUG, "Started UART comms");
     uart_log(LEVEL_INFO, "Waiting for agent...");
 
-    rcl_ret_t ret = rmw_uros_ping_agent(50, 120);
+    rcl_ret_t ret = rmw_uros_ping_agent(50, 200);
 
     if (ret != RCL_RET_OK)
     {
@@ -109,8 +110,17 @@ int main()
     rclc_executor_init(&executor, &support.context, 1, &allocator);
     
     // create timed events
-    create_timer_callback(&executor, &support, 500, publish_all_cb);
-    create_timer_callback(&executor, &support, 200, check_connectivity);
+    rcl_timer_t mogtimer;
+    RCCHECK(rclc_timer_init_default(&mogtimer, &support, RCL_MS_TO_NS(1200), amogus_cb));
+    rclc_executor_add_timer(&executor, &mogtimer);
+
+    rcl_timer_t pubtimer;
+    RCCHECK(rclc_timer_init_default(&pubtimer, &support, RCL_MS_TO_NS(1000), publish_all_cb));
+    rclc_executor_add_timer(&executor, &pubtimer);
+    
+    rcl_timer_t conntimer;
+    RCCHECK(rclc_timer_init_default(&conntimer, &support, RCL_MS_TO_NS(500), check_connectivity));
+    rclc_executor_add_timer(&executor, &conntimer);    
     
 	std_msgs__msg__Int32MultiArray dt_pwr_msg;
 	std_msgs__msg__Int32MultiArray__init(&dt_pwr_msg); // Initialize the messag
@@ -125,9 +135,13 @@ int main()
     init_all_motors();
     uart_log(LEVEL_DEBUG, "Finished init, starting exec");
     multicore_launch_core1(core1task);
+    uart_log(LEVEL_DEBUG,"main loop entry");
+    rclc_executor_spin(&executor);
+    uart_log(LEVEL_DEBUG,"fortnite");
 	while (true){
 		switch(comm_state){
 			case cs_down: {
+				uart_log(LEVEL_DEBUG,"Link down");
 				kill_all_actuators();
 				if (rmw_uros_ping_agent(10, 5) == RCL_RET_OK){
 					uart_log(LEVEL_INFO, "trying to re-connect...");
@@ -141,6 +155,7 @@ int main()
 				break;
 			}
 			case cs_disconnected: {
+				uart_log(LEVEL_DEBUG,"Link disconnected");
 				if(rmw_uros_ping_agent(50, 1) == RCL_RET_OK){
 					uart_log(LEVEL_INFO, "Connected to ROS agent");
 					comm_state = cs_connected;
