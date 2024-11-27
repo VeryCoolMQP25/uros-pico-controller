@@ -14,27 +14,27 @@
 #include "controls.h"
 #include "pins.h"
 #include "message_types.h"
+#include 
 
 // version numbering: <term>-<day>.ver
-#define VERSION "B-21.2"
+#define VERSION "B-27.1"
 
 // globals
 const char *namespace = "";
 DriveMode drive_mode = dm_halt;
 
 /// support for encoder publisher
-rcl_publisher_t encoder_publisher;
-geometry_msgs__msg__TwistStamped observed_twist_msg;
-// callback to publish encoder data (processed into timestamped twists)
+rcl_publisher_t odometry_publisher;
+nav_msgs__msg__Odometry odom_message;
 
-void publish_encoder(rcl_timer_t *timer, int64_t last_call_time)
+// callback to publish encoder data (processed into timestamped twists)
+void publish_odometry(rcl_timer_t *timer, int64_t last_call_time)
 {
 	// mutate message
-	populate_observed_twist(&observed_twist_msg);
 	// Publish message
-	if (rcl_publish(&encoder_publisher, &observed_twist_msg, NULL))
+	if (rcl_publish(&odometry_publisher, &odom_message, NULL))
 	{
-		uart_log(LEVEL_WARN, "Encoder publish failed!");
+		uart_log(LEVEL_WARN, "Odom publish failed!");
 	}
 }
 
@@ -213,29 +213,21 @@ int main()
 	rclc_executor_init(&executor, &support.context, 5, &allocator);
 
 	// --create timed events--
-	create_timer_callback(&executor, &support, 50, publish_encoder);
-	create_timer_callback(&executor, &support, 200, check_connectivity);
+	create_timer_callback(&executor, &support, 25, publish_odometry);
+	create_timer_callback(&executor, &support, 300, check_connectivity);
 	create_timer_callback(&executor, &support, 1000, uart_input_handler);
 	watchdog_update();
 
 	// --create publishers--
 	rclc_publisher_init_default(
-		&encoder_publisher,
+		&odometry_publisher,
 		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, TwistStamped),
-		"twist_observed");
+		ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
+		"odom");
 	// setup static components of message
-	observed_twist_msg.header.frame_id.data = "base_link";
-	observed_twist_msg.header.frame_id.size = strlen(observed_twist_msg.header.frame_id.data);
-	observed_twist_msg.header.frame_id.capacity = observed_twist_msg.header.frame_id.size + 1;
-	observed_twist_msg.header.stamp.sec = 0.0;
-	observed_twist_msg.header.stamp.nanosec = 0.0;
-	observed_twist_msg.twist.linear.x = 0.0;
-	observed_twist_msg.twist.linear.y = 0.0;
-	observed_twist_msg.twist.linear.z = 0.0;
-	observed_twist_msg.twist.angular.x = 0.0;
-	observed_twist_msg.twist.angular.y = 0.0;
-	observed_twist_msg.twist.angular.z = 0.0;
+	odom_message.header.frame_id.data = "base_link";
+	odom_message.header.frame_id.size = strlen(odom_message.header.frame_id.data);
+	odom_message.header.frame_id.capacity = odom_message.header.frame_id.size+1;
 
 	// --create subscribers--
 	// twist command subscriber

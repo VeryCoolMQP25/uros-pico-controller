@@ -40,8 +40,6 @@ void twist_callback(const void*);
 
 void raw_lift_callback(const void*);
 
-void populate_observed_twist(geometry_msgs__msg__TwistStamped *msg);
-
 void set_lift_power(int pwr);
 
 void do_drivetrain_pid_v();

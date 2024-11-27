@@ -8,7 +8,6 @@ add_executable(${NAME}
 
 # generate h file from pio description.
 pico_generate_pio_header(${NAME} ${CMAKE_CURRENT_LIST_DIR}/quadrature_encoder.pio)
-
 # Pull in our pico_stdlib which pulls in commonly used features
 target_link_libraries(${NAME} 
 	 pico_stdlib
