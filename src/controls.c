@@ -4,6 +4,7 @@
 #include <rclc/rclc.h>
 #include <stdio.h>
 #include <math.h>
+#include "actuators.h"
 #include "pico/stdlib.h"
 #include "uart_logging.h"
 #include "controls.h"
@@ -93,13 +94,6 @@ void raw_lift_callback(const void *msgin)
 	last_lift_msg = time_us_64();
 }
 
-void pusher_servo_callback(const void *msgin)
-{
-    const std_msgs__msg__Int8 *msg = (const std_msgs__msg__Int8 *)msgin;
-    uint8_t command_angle = msg->data;
-    set_servo_position(&button_pusher_horiz, command_angle);
-}
-
 void set_lift_power(int pwr)
 {
 	if (get_lift_hardstop() && pwr < 0)
@@ -175,8 +169,8 @@ void run_pid(Motor *motor, PIDController *pid)
 	}
 	if (do_pid_debug && printctr++ == 4){
 		char debugbuff[110];
-		snprintf(debugbuff, 110, "[%s] P:%f, I:%f, D:%f\t\terr: %f\t\tPwr: %d%%",
-		motor->name, cur_P, cur_I, cur_D, error, output);
+		snprintf(debugbuff, 110, "[%s] P:%f, I:%f, D:%f\t\ttgt: %f, act: %f\t\tPwr: %d%%",
+		motor->name, cur_P, cur_I, cur_D, pid->target, motor->velocity, output);
 		uart_log_nonblocking(LEVEL_DEBUG, debugbuff);
 		printctr = 0;
 	}
@@ -188,7 +182,8 @@ DriveMode drive_mode_from_ros()
 {
 	static DriveMode last = dm_halt;
 	// disable timeout if in PID debug mode
-	if (time_us_64() - last_twist_msg > DRIVETRAIN_TIMEOUT)
+
+	if (time_us_64() - last_twist_msg > DRIVETRAIN_TIMEOUT && !do_pid_debug)
 	{
 		if (last != dm_halt)
 		{
@@ -234,9 +229,10 @@ void die()
 {
 	// kill drivtrain control core (prevent WDT updates)
 	multicore_lockout_start_blocking();
+	kill_all_actuators();
 	while (1)
 	{
-		kill_all_actuators();
-		uart_log(LEVEL_ERROR, "KILL ME");
+	   disable_all_actuators();
+	   uart_log(LEVEL_ERROR, "KILL ME");
 	}
 }

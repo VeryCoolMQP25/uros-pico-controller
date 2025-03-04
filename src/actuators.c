@@ -11,7 +11,6 @@
 Motor drivetrain_left;
 Motor drivetrain_right;
 Motor lift_motor;
-Servo button_pusher_horiz;
 
 // return index of next unallocated PIO state machine
 static int get_next_sm()
@@ -104,39 +103,6 @@ void init_motor_with_encoder(char *name, int pin, Motor *motor_struct, int enc_p
 	}
 }
 
-void init_servo(Servo *servo_struct, uint pin)
-{
-	servo_struct->pin_num = pin;
-	gpio_init(pin);
-	gpio_set_dir(pin, GPIO_OUT);
-	gpio_put(pin, 0);
-	uint slice = pwm_gpio_to_slice_num(pin);
-	servo_struct->slice_num = slice;
-	pwm_config config = pwm_get_default_config();
-	pwm_config_set_clkdiv(&config, 100.0f);
-	pwm_config_set_wrap(&config, SERVO_PWM_WRAP);
-	// set PWM to neutral before start
-	// init and start PWM channel
-	pwm_init(slice, &config, true);
-	char debugbuff[60];
-	snprintf(debugbuff, sizeof(debugbuff), "initialized servo with pin %d, slice %d", pin, slice);
-	uart_log(LEVEL_INFO, debugbuff);
-	set_servo_position(servo_struct, 90);
-}
-
-void set_servo_position(Servo *servo_struct, uint position)
-{
-	if (position < SERVO_MIN_POS_DEG || position > SERVO_MAX_POS_DEG)
-	{
-		uart_log(LEVEL_WARN, "Invalid servo position commanded");
-		return;
-	}
-	pwm_set_enabled(servo_struct->slice_num, 1);
-	uint setpoint = SERVO_MIN_PWM + (position - SERVO_MIN_POS_DEG) * (SERVO_MAX_PWM - SERVO_MIN_PWM) / (SERVO_MAX_POS_DEG - SERVO_MIN_POS_DEG);
-	pwm_set_gpio_level(servo_struct->pin_num, setpoint);
-	servo_struct->position = position;
-}
-
 // sets the power level of a motor via PWM.
 // accepts integer power level [-100, 100]
 bool set_motor_power(Motor *motor, int power)
@@ -184,7 +150,6 @@ void init_all_motors()
 	init_motor_with_encoder("DT_L", DT_L_PWM, &drivetrain_left, DT_L_ENCODER_A, DT_L_ENCODER_B, NULL, DT_ENCODER_PPM_L, -1);
 	init_motor_with_encoder("DT_R", DT_R_PWM, &drivetrain_right, DT_R_ENCODER_A, DT_R_ENCODER_B, NULL, DT_ENCODER_PPM_R, 1);
 	init_motor("LIFT", LIFT_PWM, &lift_motor, get_lift_hardstop);
-	init_servo(&button_pusher_horiz, SERVO_PWM);
 	// initialize GPIO hardstop sensor
 	gpio_init(LIFT_LIMIT_PIN);
 	gpio_pull_up(LIFT_LIMIT_PIN);
@@ -197,6 +162,14 @@ void kill_all_actuators()
 	set_motor_power(&drivetrain_right, 0);
 	set_motor_power(&drivetrain_left, 0);
 	set_motor_power(&lift_motor, 0);
+}
+
+void disable_all_actuators()
+{
+	uart_log(LEVEL_INFO, "Actuators disabled");
+	pwm_power(&drivetrain_left,0);
+	pwm_power(&drivetrain_right,0);
+	pwm_power(&lift_motor,0);
 }
 
 void update_motor_encoder(Motor *mot)

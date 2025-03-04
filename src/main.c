@@ -17,8 +17,8 @@
 #include "nav.h"
 
 // version numbering: <term>-<day>.ver
-#define VERSION "B-53.1.1"
-#define RCL_CONTEXT_COUNT 6
+#define VERSION "B-53.2.1"
+#define RCL_CONTEXT_COUNT 5
 
 // globals
 const char *namespace = "";
@@ -84,18 +84,6 @@ void uart_input_handler(rcl_timer_t *timer, int64_t last_call_time)
 			reset_odometry();
 			do_encoder_debug = 1;
 			break;
-		case 's':
-		  if (strlen(recbuff) < 2)
-			{
-				uart_log(LEVEL_WARN, "Bad servo command! ignoring...");
-				return;
-			}
-				int cmd = atoi(recbuff+1);
-				set_servo_position(&button_pusher_horiz, cmd);
-				char servoinfobuff[60];
-				snprintf(servoinfobuff, sizeof(servoinfobuff), "Commanding %d deg", cmd);
-				uart_log(LEVEL_INFO, servoinfobuff);
-			break;
 		default:
 			uart_log(LEVEL_WARN, "Unrecognized command!");
 			uart_log(LEVEL_DEBUG, recbuff);
@@ -121,7 +109,7 @@ void core1task()
 	alarm_pool_t *pid_pool = malloc(sizeof(alarm_id_t));
 	pid_pool = alarm_pool_create_with_unused_hardware_alarm(1);
 	repeating_timer_t *pid_timer = malloc(sizeof(repeating_timer_t));
-	if (!alarm_pool_add_repeating_timer_ms(pid_pool, 20, do_drivetrain_pid_v, NULL, pid_timer)){
+	if (!alarm_pool_add_repeating_timer_ms(pid_pool, 10, do_drivetrain_pid_v, NULL, pid_timer)){
 		uart_log(LEVEL_ERROR, "Cannot init PID timer!!");
 	}
 	else {
@@ -138,8 +126,8 @@ void core1task()
 		case dm_raw:
 		{
 			set_pid(false);
-			set_motor_power(&drivetrain_left, 25);
-			set_motor_power(&drivetrain_right, 25);
+			set_motor_power(&drivetrain_left, 55);
+			set_motor_power(&drivetrain_right, 55);
 			update_motor_encoders(&drivetrain_left);
 			update_motor_encoders(&drivetrain_right);
 			char velocity_dbg[30];
@@ -288,16 +276,6 @@ int main()
 		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32),
 		"lift_raw");
 	rclc_executor_add_subscription(&executor, &lift_subscriber, &lift_msg, &raw_lift_callback, ON_NEW_DATA);
-	watchdog_update();
-	// Servo command subscriber
-	rcl_subscription_t servo_subscriber;
-	std_msgs__msg__Int8 servo_msg;
-	rclc_subscription_init_default(
-		&servo_subscriber,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int8),
-		"servo_degrees");
-	rclc_executor_add_subscription(&executor, &servo_subscriber, &servo_msg, &pusher_servo_callback, ON_NEW_DATA);
 	watchdog_update();
 	// -- general inits --
 	init_all_motors();

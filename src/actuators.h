@@ -57,23 +57,16 @@ typedef struct {
 	bool (*killfunc)(void);
 } Motor;
 
-typedef struct {
-    uint pin_num;
-    uint slice_num;
-    uint position;
-} Servo;
-
 extern Motor drivetrain_left;
 extern Motor drivetrain_right;
 extern Motor lift_motor;
-extern Servo button_pusher_horiz;
+
 
 void init_all_motors();
 bool set_motor_power(Motor*, int);
 void kill_all_actuators();
+void disable_all_actuators();
 
-void init_servo(Servo *servo_struct, uint pin_num);
-void set_servo_position(Servo *servo_struct, uint position);
 
 void update_motor_encoder(Motor*);
 bool get_lift_hardstop();

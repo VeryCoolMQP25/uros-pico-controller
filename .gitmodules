@@ -5,3 +5,6 @@
 [submodule "uros_ws/src/mqp_teleop"]
 	path = uros_ws/src/mqp_teleop
 	url = git@github.com:VeryCoolMQP25/teleop-lift-pkg.git
+[submodule "vendor_deps/rpi-pico-mpu6050"]
+	path = vendor_deps/rpi-pico-mpu6050
+	url = https://github.com/HumansAreWeak/rpi-pico-mpu6050
