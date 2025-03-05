@@ -6,6 +6,9 @@
 #include "pins.h"
 #include "uart_logging.h"
 #include "tunables.h"
+
+const float voltage_convert_ratio = 3.3f / (1 << 12);
+
 // return index of next unallocated PIO state machine
 static int get_next_sm()
 {
@@ -32,6 +35,12 @@ void sensor_init(){
 	// load pio program into both PIOs
 	pio_add_program(pio0, &quadrature_encoder_program);
 	pio_add_program(pio1, &quadrature_encoder_program);
+	// battery voltage sensor
+	adc_init();
+	adc_gpio_init(VBATT_SENSE_PIN);
+	adc_select_input(0); // PIN26
+
+
 }
 
 Encoder *init_encoder(uint pinA, uint pinB, uint ppm, int direction)
@@ -72,4 +81,11 @@ Encoder *init_encoder(uint pinA, uint pinB, uint ppm, int direction)
 bool get_lift_hardstop()
 {
 	return !gpio_get(LIFT_LIMIT_PIN);
+}
+
+float get_battery_voltage()
+{
+    adc_select_input(0); // ensure batt input is selected
+	uint16_t raw = adc_read();
+	return raw * voltage_convert_ratio;
 }

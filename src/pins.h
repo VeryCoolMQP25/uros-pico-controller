@@ -29,7 +29,7 @@
 //#define UNASSIGNED		23
 //#define UNASSIGNED		24
 #define LED_PIN				25
-//#define UNASSIGNED		26
+#define VBATT_SENSE_PIN		26
 //#define UNASSIGNED		27
 //#define UNASSIGNED		28
 

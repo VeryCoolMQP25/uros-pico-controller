@@ -85,6 +85,13 @@ void uart_input_handler(rcl_timer_t *timer, int64_t last_call_time)
 			reset_odometry();
 			do_encoder_debug = 1;
 			break;
+		case 'v':
+		{
+			char buf[60];
+			snprintf(buf, sizeof(buf), "Battery voltage: %fV", get_battery_voltage());
+			uart_log(LEVEL_INFO, buf);
+			break;
+		}
 		default:
 			uart_log(LEVEL_WARN, "Unrecognized command!");
 			uart_log(LEVEL_DEBUG, recbuff);

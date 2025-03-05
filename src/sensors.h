@@ -17,6 +17,6 @@ typedef struct {
 void sensor_init();
 bool get_lift_hardstop();
 Encoder *init_encoder(uint pinA, uint pinB, uint ppm, int direction);
-
+float get_battery_voltage();
 
 #endif
