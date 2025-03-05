@@ -116,7 +116,7 @@ bool do_drivetrain_pid_v(__unused struct repeating_timer *tmr)
 		run_pid(&drivetrain_left, &pid_v_left);
 		run_pid(&drivetrain_right, &pid_v_right);
 	}
-	return true; // instruct timer to keep repeating
+	return 1; // instruct timer to keep repeating
 }
 
 void run_pid(Motor *motor, PIDController *pid)

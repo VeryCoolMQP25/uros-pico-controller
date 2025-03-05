@@ -25,6 +25,8 @@
 const char *namespace = "";
 DriveMode drive_mode = dm_halt;
 uint8_t do_encoder_debug = 0;
+uint8_t do_core1_healthcheck = 0;
+int core1_stage = 0;
 
 /// support for encoder publisher
 rcl_publisher_t odometry_publisher;
@@ -48,7 +50,7 @@ void publish_encoder(rcl_timer_t *timer, int64_t last_call_time)
 	if (do_encoder_debug)
 	{
 	   char encoderbuff[100];
-		snprintf(encoderbuff, sizeof(encoderbuff), "Encoder data: %f %f\n", drivetrain_left.position, drivetrain_right.position);
+		snprintf(encoderbuff, sizeof(encoderbuff), "Encoder positions: %f %f\n", drivetrain_left.position, drivetrain_right.position);
 		uart_log(LEVEL_DEBUG, encoderbuff);
 	}
 }
@@ -106,6 +108,21 @@ void uart_input_handler(rcl_timer_t *timer, int64_t last_call_time)
 			uart_log(LEVEL_INFO, buf);
 			break;
 		}
+		case 'h':
+		{
+	        uart_log(LEVEL_WARN, "System is going down now!");
+			die();
+			break;
+		}
+		case 't':
+		    if (do_core1_healthcheck == 2){
+				uart_log(LEVEL_ERROR, "Core1 exited");
+				}
+		    do_core1_healthcheck = 1;
+			char stage[50];
+			snprintf(stage, 50, "Core1 check requested, stage: %d",core1_stage);
+			uart_log(LEVEL_INFO, stage);
+			break;
 		default:
 			uart_log(LEVEL_WARN, "Unrecognized command!");
 			uart_log(LEVEL_DEBUG, recbuff);
@@ -125,6 +142,7 @@ rcl_timer_t *create_timer_callback(rclc_executor_t *executor, rclc_support_t *su
 
 void core1task()
 {
+    core1_stage = 0;
 	uart_log(LEVEL_DEBUG, "Started core 1 task");
 	multicore_lockout_victim_init();
 	int motor_kill_ctr = 0;
@@ -139,9 +157,17 @@ void core1task()
 	}
 	while (true)
 	{
+	   core1_stage = 1;
+	    if(do_core1_healthcheck){
+			uart_log(LEVEL_INFO, "Core1 is up!");
+			do_core1_healthcheck = false;
+			}
 		drive_mode = drive_mode_from_ros();
+		core1_stage = 2;
 		lift_timeout_check();
+		core1_stage = 3;
 		update_motor_encoders();
+		core1_stage = 4;
 		switch (drive_mode)
 		{
 		case dm_raw:
@@ -182,11 +208,13 @@ void core1task()
 			uart_log(LEVEL_WARN, "Invalid drive state!");
 			drive_mode = dm_halt;
 		}
+		core1_stage = 5;
 		sleep_us(500);
 	}
 	alarm_pool_destroy(pid_pool); // kill PID timer
 	uart_log(LEVEL_ERROR, "Exiting core1 task!");
 	kill_all_actuators();
+	do_core1_healthcheck = 2;
 }
 
 int main()
