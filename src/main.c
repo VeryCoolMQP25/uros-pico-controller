@@ -19,7 +19,7 @@
 
 // version numbering: <term>-<day>.ver
 #define VERSION "B-53.3.1"
-#define RCL_CONTEXT_COUNT 5
+#define RCL_CONTEXT_COUNT 6
 
 // globals
 const char *namespace = "";
@@ -29,10 +29,15 @@ uint8_t do_encoder_debug = 0;
 /// support for encoder publisher
 rcl_publisher_t odometry_publisher;
 nav_msgs__msg__Odometry odometry_message;
+// support for battery voltage publisher
+rcl_publisher_t battery_publisher;
+std_msgs__msg__Float32 battery_message;
+
 // callback to publish encoder data (processed into timestamped twists)
 
 void publish_encoder(rcl_timer_t *timer, int64_t last_call_time)
 {
+    watchdog_update();
 	//fill in up-to-date values for odom
 	populate_odometry(&odometry_message);
 	// Publish messages
@@ -45,6 +50,15 @@ void publish_encoder(rcl_timer_t *timer, int64_t last_call_time)
 	   char encoderbuff[100];
 		snprintf(encoderbuff, sizeof(encoderbuff), "Encoder data: %f %f\n", drivetrain_left.position, drivetrain_right.position);
 		uart_log(LEVEL_DEBUG, encoderbuff);
+	}
+}
+
+void publish_battery(rcl_timer_t *timer, int64_t last_call_time)
+{
+    battery_message.data = get_battery_voltage();
+	if (rcl_publish(&battery_publisher, &battery_message, NULL))
+	{
+		uart_log(LEVEL_WARN, "Battery publish failed!");
 	}
 }
 
@@ -125,7 +139,6 @@ void core1task()
 	}
 	while (true)
 	{
-		watchdog_update();
 		drive_mode = drive_mode_from_ros();
 		lift_timeout_check();
 		update_motor_encoders();
@@ -252,6 +265,7 @@ int main()
 	create_timer_callback(&executor, &support, 10, publish_encoder);
 	create_timer_callback(&executor, &support, 200, check_connectivity);
 	create_timer_callback(&executor, &support, 800, uart_input_handler);
+	create_timer_callback(&executor, &support, 5000, publish_battery);
 	watchdog_update();
 
 	// --create publishers--
@@ -262,6 +276,12 @@ int main()
 		"odom");
 	// setup static components of message
 	init_odom_message(&odometry_message);
+
+	rclc_publisher_init_default(
+		&battery_publisher,
+		&node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32),
+		"battery_voltage");
 
 	// --create subscribers--
 	// twist command subscriber

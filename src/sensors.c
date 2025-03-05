@@ -7,7 +7,7 @@
 #include "uart_logging.h"
 #include "tunables.h"
 
-const float voltage_convert_ratio = 3.3f / (1 << 12);
+const float voltage_convert_ratio = (5.727f * 3.3f) / (1 << 12);
 
 // return index of next unallocated PIO state machine
 static int get_next_sm()
