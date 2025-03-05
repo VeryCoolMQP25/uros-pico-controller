@@ -15,9 +15,10 @@
 #include "pins.h"
 #include "message_types.h"
 #include "nav.h"
+#include "sensors.h"
 
 // version numbering: <term>-<day>.ver
-#define VERSION "B-53.2.1"
+#define VERSION "B-53.3.1"
 #define RCL_CONTEXT_COUNT 5
 
 // globals
@@ -172,7 +173,6 @@ int main()
 {
 	// init uart0 debugging iface
 	uart_setup();
-	uart_log(LEVEL_INFO, "Started UART comms");
 	char *ver_str = malloc(40);
 	snprintf(ver_str, 40, "--Robot Software Version %s--", VERSION);
 	uart_log(LEVEL_INFO, ver_str);
@@ -185,7 +185,7 @@ int main()
 	}
 	else
 	{
-		uart_log(LEVEL_INFO, "Boot was clean.");
+		uart_log(LEVEL_DEBUG, "Boot was clean.");
 	}
 	uart_log(LEVEL_INFO, "Starting watchdog...");
 	watchdog_enable(300, 1);
@@ -238,7 +238,7 @@ int main()
 
 	allocator = rcl_get_default_allocator();
 	rclc_support_init(&support, 0, NULL, &allocator);
-	rclc_node_init_default(&node, "pico_node", namespace, &support);
+	rclc_node_init_default(&node, "primary_pico", namespace, &support);
 	rclc_executor_init(&executor, &support.context, RCL_CONTEXT_COUNT, &allocator);
 
 	// --create timed events--
@@ -269,16 +269,17 @@ int main()
 	watchdog_update();
 	// Lift command subscriber
 	rcl_subscription_t lift_subscriber;
-	std_msgs__msg__Float32 lift_msg;
+	std_msgs__msg__Int16 lift_msg;
 	rclc_subscription_init_default(
 		&lift_subscriber,
 		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32),
-		"lift_raw");
-	rclc_executor_add_subscription(&executor, &lift_subscriber, &lift_msg, &raw_lift_callback, ON_NEW_DATA);
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
+		"lift_power");
+	rclc_executor_add_subscription(&executor, &lift_subscriber, &lift_msg, &lift_callback, ON_NEW_DATA);
 	watchdog_update();
 	// -- general inits --
 	init_all_motors();
+	sensor_init();
 	pid_setup();
 	init_odometry();
 	uart_log(LEVEL_DEBUG, "Finished init, starting exec");

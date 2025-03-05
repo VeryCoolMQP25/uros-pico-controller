@@ -4,8 +4,8 @@
 #include "pins.h"
 #include "hardware/pwm.h"
 #include "hardware/clocks.h"
-#include "quadrature_encoder.pio.h"
 #include <stdint.h>
+#include "sensors.h"
 
 /** Talon SR speed controller specifics
  * 333Hz signal
@@ -37,15 +37,6 @@
 #define SERVO_MAX_POS_DEG  180
 
 typedef struct {
-	PIO pio;
-	uint sm;
-	uint prev_count;
-	uint64_t prev_time_us;
-	uint ppm;
-	int8_t direction;
-} Encoder;
-
-typedef struct {
 	char *name;
 	uint pin_num;
 	uint slice_num;
@@ -67,8 +58,7 @@ bool set_motor_power(Motor*, int);
 void kill_all_actuators();
 void disable_all_actuators();
 
-
 void update_motor_encoder(Motor*);
-bool get_lift_hardstop();
+
 void pwm_power(Motor *motor, bool enable);
 #endif

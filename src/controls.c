@@ -86,10 +86,10 @@ void twist_callback(const void *msgin)
 	last_twist_msg = time_us_64();
 }
 
-void raw_lift_callback(const void *msgin)
+void lift_callback(const void *msgin)
 {
-	const std_msgs__msg__Float32 *msg = (const std_msgs__msg__Float32 *)msgin;
-	int pow = (int)(msg->data * 100.0);
+	const std_msgs__msg__Int16 *msg = (const std_msgs__msg__Int16 *)msgin;
+	int pow = (int)(msg->data);
 	set_lift_power(pow);
 	last_lift_msg = time_us_64();
 }

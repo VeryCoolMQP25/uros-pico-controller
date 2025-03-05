@@ -39,7 +39,7 @@ void update_motor_encoders();
 
 void twist_callback(const void*);
 
-void raw_lift_callback(const void*);
+void lift_callback(const void*);
 
 void set_lift_power(int pwr);
 
