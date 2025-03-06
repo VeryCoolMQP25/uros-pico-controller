@@ -27,6 +27,85 @@ DriveMode drive_mode = dm_halt;
 uint8_t do_encoder_debug = 0;
 uint8_t do_core1_healthcheck = 0;
 int core1_stage = 0;
+uint8_t core1_flag = 1;
+
+void core1task()
+{
+    core1_stage = 0;
+	uart_log(LEVEL_DEBUG, "Started core 1 task");
+	multicore_lockout_victim_init();
+	int motor_kill_ctr = 0;
+	alarm_pool_t *pid_pool = malloc(sizeof(alarm_id_t));
+	pid_pool = alarm_pool_create_with_unused_hardware_alarm(1);
+	repeating_timer_t *pid_timer = malloc(sizeof(repeating_timer_t));
+	if (!alarm_pool_add_repeating_timer_ms(pid_pool, 15, do_drivetrain_pid_v, NULL, pid_timer)){
+		uart_log(LEVEL_ERROR, "Cannot init PID timer!!");
+	}
+	else {
+		uart_log(LEVEL_INFO, "Started recurring PID interrupt timer");
+	}
+	while (true)
+	{
+        core1_flag = 1;
+        core1_stage = 1;
+	    if(do_core1_healthcheck){
+			uart_log(LEVEL_INFO, "Core1 is up!");
+			do_core1_healthcheck = false;
+		}
+		drive_mode = drive_mode_from_ros();
+		core1_stage = 2;
+		lift_timeout_check();
+		core1_stage = 3;
+		update_motor_encoders();
+		core1_stage = 4;
+		switch (drive_mode)
+		{
+		case dm_raw:
+		{
+			set_pid(false);
+			set_motor_power(&drivetrain_left, 55);
+			set_motor_power(&drivetrain_right, 55);
+			update_motor_encoders(&drivetrain_left);
+			update_motor_encoders(&drivetrain_right);
+			char velocity_dbg[30];
+			snprintf(velocity_dbg, 30, "Velocities: (%f, %f)", drivetrain_left.velocity, drivetrain_right.velocity);
+			uart_log_nonblocking(LEVEL_DEBUG, velocity_dbg);
+			motor_kill_ctr = 0;
+			break;
+		}
+		case dm_halt:
+			set_pid(false);
+			if (motor_kill_ctr++ < 500)
+			{
+				set_motor_power(&drivetrain_left, 0);
+				set_motor_power(&drivetrain_right, 0);
+			}
+			else
+			{
+				pwm_power(&drivetrain_left, false);
+				pwm_power(&drivetrain_right, false);
+				if(motor_kill_ctr == 500){
+					uart_log(LEVEL_INFO, "Disabling drivetrain.");
+				}
+			}
+
+			break;
+		case dm_twist:
+			set_pid(true);
+			motor_kill_ctr = 0;
+			break;
+		default:
+			uart_log(LEVEL_WARN, "Invalid drive state!");
+			drive_mode = dm_halt;
+		}
+		core1_stage = 5;
+		sleep_us(1000);
+	}
+	alarm_pool_destroy(pid_pool); // kill PID timer
+	uart_log(LEVEL_ERROR, "Exiting core1 task!");
+	kill_all_actuators();
+	do_core1_healthcheck = 2;
+}
 
 /// support for encoder publisher
 rcl_publisher_t odometry_publisher;
@@ -67,6 +146,19 @@ void publish_battery(rcl_timer_t *timer, int64_t last_call_time)
 // checks if we have comms with serial agent
 void check_connectivity(rcl_timer_t *timer, int64_t last_call_time)
 {
+    static uint8_t core1_fail_count = 0;
+    if (!core1_flag){
+        core1_fail_count++;
+        if (core1_fail_count > 5){
+            uart_log(LEVEL_ERROR, "Core1 failed! Restarting...");
+            multicore_reset_core1();
+            multicore_launch_core1(core1task);
+        }
+    }
+    else{
+        core1_flag = 0;
+        core1_fail_count = 0;
+    }
 	// uart_log(LEVEL_DEBUG, "connectivity CB run");
 	bool ok = (rmw_uros_ping_agent(50, 1) == RCL_RET_OK);
 	gpio_put(LED_PIN, ok);
@@ -138,83 +230,6 @@ rcl_timer_t *create_timer_callback(rclc_executor_t *executor, rclc_support_t *su
 	rclc_executor_add_timer(executor, timer);
 	uart_log(LEVEL_DEBUG, "registered timer cb");
 	return timer;
-}
-
-void core1task()
-{
-    core1_stage = 0;
-	uart_log(LEVEL_DEBUG, "Started core 1 task");
-	multicore_lockout_victim_init();
-	int motor_kill_ctr = 0;
-	alarm_pool_t *pid_pool = malloc(sizeof(alarm_id_t));
-	pid_pool = alarm_pool_create_with_unused_hardware_alarm(1);
-	repeating_timer_t *pid_timer = malloc(sizeof(repeating_timer_t));
-	if (!alarm_pool_add_repeating_timer_ms(pid_pool, 10, do_drivetrain_pid_v, NULL, pid_timer)){
-		uart_log(LEVEL_ERROR, "Cannot init PID timer!!");
-	}
-	else {
-		uart_log(LEVEL_INFO, "Started recurring PID interrupt timer");
-	}
-	while (true)
-	{
-	   core1_stage = 1;
-	    if(do_core1_healthcheck){
-			uart_log(LEVEL_INFO, "Core1 is up!");
-			do_core1_healthcheck = false;
-			}
-		drive_mode = drive_mode_from_ros();
-		core1_stage = 2;
-		lift_timeout_check();
-		core1_stage = 3;
-		update_motor_encoders();
-		core1_stage = 4;
-		switch (drive_mode)
-		{
-		case dm_raw:
-		{
-			set_pid(false);
-			set_motor_power(&drivetrain_left, 55);
-			set_motor_power(&drivetrain_right, 55);
-			update_motor_encoders(&drivetrain_left);
-			update_motor_encoders(&drivetrain_right);
-			char velocity_dbg[30];
-			snprintf(velocity_dbg, 30, "Velocities: (%f, %f)", drivetrain_left.velocity, drivetrain_right.velocity);
-			uart_log(LEVEL_DEBUG, velocity_dbg);
-			motor_kill_ctr = 0;
-			break;
-		}
-		case dm_halt:
-			set_pid(false);
-			if (motor_kill_ctr++ < 500)
-			{
-				set_motor_power(&drivetrain_left, 0);
-				set_motor_power(&drivetrain_right, 0);
-			}
-			else
-			{
-				pwm_power(&drivetrain_left, false);
-				pwm_power(&drivetrain_right, false);
-				if(motor_kill_ctr == 500){
-					uart_log(LEVEL_INFO, "Disabling drivetrain.");
-				}
-			}
-
-			break;
-		case dm_twist:
-			set_pid(true);
-			motor_kill_ctr = 0;
-			break;
-		default:
-			uart_log(LEVEL_WARN, "Invalid drive state!");
-			drive_mode = dm_halt;
-		}
-		core1_stage = 5;
-		sleep_us(500);
-	}
-	alarm_pool_destroy(pid_pool); // kill PID timer
-	uart_log(LEVEL_ERROR, "Exiting core1 task!");
-	kill_all_actuators();
-	do_core1_healthcheck = 2;
 }
 
 int main()
@@ -293,7 +308,7 @@ int main()
 	create_timer_callback(&executor, &support, 10, publish_encoder);
 	create_timer_callback(&executor, &support, 200, check_connectivity);
 	create_timer_callback(&executor, &support, 800, uart_input_handler);
-	create_timer_callback(&executor, &support, 5000, publish_battery);
+	create_timer_callback(&executor, &support, 2500, publish_battery);
 	watchdog_update();
 
 	// --create publishers--

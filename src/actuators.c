@@ -90,7 +90,6 @@ void kill_all_actuators()
 	uart_log(LEVEL_INFO, "Actuators killed");
 	set_motor_power(&drivetrain_right, 0);
 	set_motor_power(&drivetrain_left, 0);
-	set_motor_power(&lift_motor, 0);
 }
 
 void update_motor_encoder(Motor *mot)
@@ -99,7 +98,7 @@ void update_motor_encoder(Motor *mot)
 	// skip function if encoder did not init
 	if (encoder == NULL)
 	{
-		uart_log(LEVEL_WARN, "Encoder is NULL!!");
+		uart_log(LEVEL_ERROR, "Encoder is NULL!!");
 		return;
 	}
 	int32_t raw = quadrature_encoder_get_count(encoder->pio, encoder->sm)*encoder->direction;
