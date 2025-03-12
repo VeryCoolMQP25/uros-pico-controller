@@ -2,12 +2,104 @@
 	path = uros_ws/src/micro_ros_setup
 	url = https://github.com/micro-ROS/micro_ros_setup.git
 	branch = humble
-[submodule "uros_ws/src/mqp_teleop"]
-	path = uros_ws/src/mqp_teleop
-	url = git@github.com:VeryCoolMQP25/teleop-lift-pkg.git
-[submodule "vendor_deps/rpi-pico-mpu6050"]
-	path = vendor_deps/rpi-pico-mpu6050
-	url = https://github.com/HumansAreWeak/rpi-pico-mpu6050
 [submodule "uros_ws/firmware/dev_ws/ament/ament_cmake"]
 	path = uros_ws/firmware/dev_ws/ament/ament_cmake
 	url = https://github.com/ament/ament_cmake.git
+[submodule "uros_ws/firmware/dev_ws/ament/ament_index"]
+    path = uros_ws/firmware/dev_ws/ament/ament_index
+    url = https://github.com/ament/ament_index.git
+[submodule "uros_ws/firmware/dev_ws/ament/ament_lint"]
+    path = uros_ws/firmware/dev_ws/ament/ament_lint
+    url = https://github.com/ament/ament_lint.git
+[submodule "uros_ws/firmware/dev_ws/ament/ament_package"]
+    path = uros_ws/firmware/dev_ws/ament/ament_package
+    url = https://github.com/ament/ament_package.git
+[submodule "uros_ws/firmware/dev_ws/ament/googletest"]
+    path = uros_ws/firmware/dev_ws/ament/googletest
+    url = https://github.com/ament/googletest.git
+[submodule "uros_ws/firmware/dev_ws/ament/uncrustify_vendor"]
+    path = uros_ws/firmware/dev_ws/ament/uncrustify_vendor
+    url = https://github.com/ament/uncrustify_vendor.git
+[submodule "uros_ws/firmware/dev_ws/ros2/ament_cmake_ros"]
+    path = uros_ws/firmware/dev_ws/ros2/ament_cmake_ros
+    url = https://github.com/ros2/ament_cmake_ros.git
+[submodule "uros_ws/firmware/mcu_ws/eProsima/Micro-CDR"]
+    path = uros_ws/firmware/mcu_ws/eProsima/Micro-CDR
+    url = https://github.com/eProsima/micro-CDR.git
+[submodule "uros_ws/firmware/mcu_ws/eProsima/Micro-XRCE-DDS-Client"]
+    path = uros_ws/firmware/mcu_ws/eProsima/Micro-XRCE-DDS-Client
+    url = https://github.com/eProsima/Micro-XRCE-DDS-Client.git
+   
+[submodule "uros_ws/firmware/mcu_ws/ros2/common_interfaces"]
+    path = uros_ws/firmware/mcu_ws/ros2/common_interfaces
+    url = https://github.com/ros2/common_interfaces.git
+   
+[submodule "uros_ws/firmware/mcu_ws/ros2/example_interfaces"]
+    path = uros_ws/firmware/mcu_ws/ros2/example_interfaces
+    url = https://github.com/ros2/example_interfaces.git
+   
+[submodule "uros_ws/firmware/mcu_ws/ros2/libyaml_vendor"]
+    path = uros_ws/firmware/mcu_ws/ros2/libyaml_vendor
+    url = https://github.com/ros2/libyaml_vendor.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rcl"]
+    path = uros_ws/firmware/mcu_ws/ros2/rcl
+    url = https://github.com/ros2/rcl.git
+
+[submodule "uros_ws/firmware/mcu_ws/ros2/rcl_interfaces"]
+    path = uros_ws/firmware/mcu_ws/ros2/rcl_interfaces
+    url = https://github.com/ros2/rcl_interfaces.git
+   
+[submodule "uros_ws/firmware/mcu_ws/ros2/rcl_logging"]
+    path = uros_ws/firmware/mcu_ws/ros2/rcl_logging
+    url = https://github.com/ros2/rcl_logging.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rcpputils"]
+    path = uros_ws/firmware/mcu_ws/ros2/rcpputils
+    url = https://github.com/ros2/rcpputils.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rmw"]
+    path = uros_ws/firmware/mcu_ws/ros2/rmw
+    url = https://github.com/ros2/rmw.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rmw_implementation"]
+    path = uros_ws/firmware/mcu_ws/ros2/rmw_implementation
+    url = https://github.com/ros2/rmw_implementation.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rosidl"]
+    path = uros_ws/firmware/mcu_ws/ros2/rosidl
+    url = https://github.com/ros2/rosidl.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rosidl_dds"]
+    path = uros_ws/firmware/mcu_ws/ros2/rosidl_dds
+    url = https://github.com/ros2/rosidl_dds.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/rosidl_defaults"]
+    path = uros_ws/firmware/mcu_ws/ros2/rosidl_defaults
+    url = https://github.com/ros2/rosidl_defaults.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/test_interface_files"]
+    path = uros_ws/firmware/mcu_ws/ros2/test_interface_files
+    url = https://github.com/ros2/test_interface_files.git
+[submodule "uros_ws/firmware/mcu_ws/ros2/unique_identifier_msgs"]
+    path = uros_ws/firmware/mcu_ws/ros2/unique_identifier_msgs
+    url = https://github.com/ros2/unique_identifier_msgs.git
+[submodule "uros_ws/firmware/mcu_ws/uros/micro_ros_msgs"]
+    path = uros_ws/firmware/mcu_ws/uros/micro_ros_msgs
+    url = https://github.com/micro-ROS/micro_ros_msgs.git
+[submodule "uros_ws/firmware/mcu_ws/uros/micro_ros_utilities"]
+    path = uros_ws/firmware/mcu_ws/uros/micro_ros_utilities
+    url = https://github.com/micro-ROS/micro_ros_utilities.git
+[submodule "uros_ws/firmware/mcu_ws/uros/rcl"]
+    path = uros_ws/firmware/mcu_ws/uros/rcl
+    url = https://github.com/micro-ROS/rcl.git
+[submodule "uros_ws/firmware/mcu_ws/uros/rclc"]
+    path = uros_ws/firmware/mcu_ws/uros/rclc
+    url = https://github.com/micro-ROS/rclc.git
+[submodule "uros_ws/firmware/mcu_ws/uros/rcutils"]
+    path = uros_ws/firmware/mcu_ws/uros/rcutils
+    url = https://github.com/micro-ROS/rcutils.git
+[submodule "uros_ws/firmware/mcu_ws/uros/rmw_microxrcedds"]
+    path = uros_ws/firmware/mcu_ws/uros/rmw_microxrcedds
+    url = https://github.com/micro-ROS/rmw_microxrcedds.git
+[submodule "uros_ws/firmware/mcu_ws/uros/rosidl_typesupport"]
+    path = uros_ws/firmware/mcu_ws/uros/rosidl_typesupport
+    url = https://github.com/micro-ROS/rosidl_typesupport.git
+[submodule "uros_ws/firmware/mcu_ws/uros/rosidl_typesupport_microxrcedds"]
+    path = uros_ws/firmware/mcu_ws/uros/rosidl_typesupport_microxrcedds
+    url = https://github.com/micro-ROS/rosidl_typesupport_microxrcedds.git
+[submodule "uros_ws/firmware/mcu_ws/uros/tracetools"]
+    path = uros_ws/firmware/mcu_ws/uros/tracetools
+    url = https://github.com/ros2/ros2_tracing.git

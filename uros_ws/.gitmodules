@@ -1,3 +1,0 @@
-[submodule "firmware/dev_ws/ament/ament_cmake"]
-    path = firmware/dev_ws/ament/ament_cmake
-    url = https://github.com/ament/ament_cmake.git
