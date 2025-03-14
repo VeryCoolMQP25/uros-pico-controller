@@ -1,3 +1,4 @@
+source;ros_domain_id.txt
 source;share/ament_cmake_target_dependencies/hook/cmake_prefix_path.ps1
 source;share/ament_cmake_target_dependencies/hook/cmake_prefix_path.dsv
 source;share/ament_cmake_target_dependencies/hook/cmake_prefix_path.sh
@@ -5,4 +6,5 @@ source;share/ament_cmake_target_dependencies/local_setup.bash
 source;share/ament_cmake_target_dependencies/local_setup.dsv
 source;share/ament_cmake_target_dependencies/local_setup.ps1
 source;share/ament_cmake_target_dependencies/local_setup.sh
+source;share/ament_cmake_target_dependencies/local_setup.spawn_bash_shell
 source;share/ament_cmake_target_dependencies/local_setup.zsh

@@ -29,26 +29,21 @@
 [submodule "uros_ws/firmware/mcu_ws/eProsima/Micro-XRCE-DDS-Client"]
     path = uros_ws/firmware/mcu_ws/eProsima/Micro-XRCE-DDS-Client
     url = https://github.com/eProsima/Micro-XRCE-DDS-Client.git
-   
 [submodule "uros_ws/firmware/mcu_ws/ros2/common_interfaces"]
     path = uros_ws/firmware/mcu_ws/ros2/common_interfaces
     url = https://github.com/ros2/common_interfaces.git
-   
 [submodule "uros_ws/firmware/mcu_ws/ros2/example_interfaces"]
     path = uros_ws/firmware/mcu_ws/ros2/example_interfaces
     url = https://github.com/ros2/example_interfaces.git
-   
 [submodule "uros_ws/firmware/mcu_ws/ros2/libyaml_vendor"]
     path = uros_ws/firmware/mcu_ws/ros2/libyaml_vendor
     url = https://github.com/ros2/libyaml_vendor.git
 [submodule "uros_ws/firmware/mcu_ws/ros2/rcl"]
     path = uros_ws/firmware/mcu_ws/ros2/rcl
     url = https://github.com/ros2/rcl.git
-
 [submodule "uros_ws/firmware/mcu_ws/ros2/rcl_interfaces"]
     path = uros_ws/firmware/mcu_ws/ros2/rcl_interfaces
     url = https://github.com/ros2/rcl_interfaces.git
-   
 [submodule "uros_ws/firmware/mcu_ws/ros2/rcl_logging"]
     path = uros_ws/firmware/mcu_ws/ros2/rcl_logging
     url = https://github.com/ros2/rcl_logging.git

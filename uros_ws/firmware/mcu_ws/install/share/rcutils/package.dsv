@@ -1,12 +1,16 @@
+source;ros_domain_id.txt
 source;share/rcutils/hook/cmake_prefix_path.ps1
 source;share/rcutils/hook/cmake_prefix_path.dsv
 source;share/rcutils/hook/cmake_prefix_path.sh
+source;ros_domain_id.txt
 source;share/rcutils/hook/path.ps1
 source;share/rcutils/hook/path.dsv
 source;share/rcutils/hook/path.sh
+source;ros_domain_id.txt
 source;share/rcutils/hook/pythonpath.ps1
 source;share/rcutils/hook/pythonpath.dsv
 source;share/rcutils/hook/pythonpath.sh
+source;ros_domain_id.txt
 source;share/rcutils/hook/pythonscriptspath.ps1
 source;share/rcutils/hook/pythonscriptspath.dsv
 source;share/rcutils/hook/pythonscriptspath.sh
@@ -14,4 +18,5 @@ source;share/rcutils/local_setup.bash
 source;share/rcutils/local_setup.dsv
 source;share/rcutils/local_setup.ps1
 source;share/rcutils/local_setup.sh
+source;share/rcutils/local_setup.spawn_bash_shell
 source;share/rcutils/local_setup.zsh

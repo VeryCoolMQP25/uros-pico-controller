@@ -9,7 +9,6 @@
 #include "controls.h"
 #include "tunables.h"
 #include "nav.h"
-#include "haw/MPU6050.h"
 
 OdomState *ods_a;
 OdomState *ods_b;
