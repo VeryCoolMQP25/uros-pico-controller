@@ -6,6 +6,7 @@
 #include "pins.h"
 #include "uart_logging.h"
 #include "tunables.h"
+#include "pico/malloc.h"
 
 const float voltage_convert_ratio = (5.727f * 3.3f) / (1 << 12);
 

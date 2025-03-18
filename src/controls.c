@@ -73,7 +73,6 @@ void update_motor_encoders(){
 	update_motor_encoder(&drivetrain_left);
 	update_motor_encoder(&drivetrain_right);
 	update_odometry();
-	// TODO: lift encoder; when added
 }
 
 void twist_callback(const void *msgin)
@@ -117,6 +116,10 @@ bool do_drivetrain_pid_v(__unused struct repeating_timer *tmr)
 		run_pid(&drivetrain_right, &pid_v_right);
 	}
 	return 1; // instruct timer to keep repeating
+}
+
+uint64_t get_last_pid_update(){
+	return pid_v_right.last_tick_us;
 }
 
 void run_pid(Motor *motor, PIDController *pid)

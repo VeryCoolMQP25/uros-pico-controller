@@ -40,12 +40,21 @@ void core1task()
 	repeating_timer_t *pid_timer = malloc(sizeof(repeating_timer_t));
 	if (!alarm_pool_add_repeating_timer_ms(pid_pool, 15, do_drivetrain_pid_v, NULL, pid_timer)){
 		uart_log(LEVEL_ERROR, "Cannot init PID timer!!");
+		return;
 	}
 	else {
 		uart_log(LEVEL_INFO, "Started recurring PID interrupt timer");
 	}
 	while (true)
 	{
+		if (time_us_64() - get_last_pid_update() > 30000){
+			uart_log(LEVEL_ERROR, "PID update failed! Attempting restart");
+			alarm_pool_destroy(pid_pool);
+			pid_pool = alarm_pool_create_with_unused_hardware_alarm(1);
+			if (!alarm_pool_add_repeating_timer_ms(pid_pool, 15, do_drivetrain_pid_v, NULL, pid_timer)){
+				continue;
+			}
+		}
         core1_flag = 1;
         core1_stage = 1;
 	    if(do_core1_healthcheck){
@@ -60,19 +69,6 @@ void core1task()
 		core1_stage = 4;
 		switch (drive_mode)
 		{
-		case dm_raw:
-		{
-			set_pid(false);
-			set_motor_power(&drivetrain_left, 55);
-			set_motor_power(&drivetrain_right, 55);
-			update_motor_encoders(&drivetrain_left);
-			update_motor_encoders(&drivetrain_right);
-			char velocity_dbg[30];
-			snprintf(velocity_dbg, 30, "Velocities: (%f, %f)", drivetrain_left.velocity, drivetrain_right.velocity);
-			uart_log_nonblocking(LEVEL_DEBUG, velocity_dbg);
-			motor_kill_ctr = 0;
-			break;
-		}
 		case dm_halt:
 			set_pid(false);
 			if (motor_kill_ctr++ < 500)
@@ -149,18 +145,22 @@ void check_connectivity(rcl_timer_t *timer, int64_t last_call_time)
     static uint8_t core1_fail_count = 0;
     if (!core1_flag){
         core1_fail_count++;
-        if (core1_fail_count > 5){
+        if (core1_fail_count == 5){
             uart_log(LEVEL_ERROR, "Core1 failed! Restarting...");
             multicore_reset_core1();
             multicore_launch_core1(core1task);
         }
+		else if (core1_fail_count > 6){
+			uart_log(LEVEL_ERROR, "Core1 failed to restart! Emergency system restart.");
+			die();
+		}
     }
     else{
         core1_flag = 0;
         core1_fail_count = 0;
     }
 	// uart_log(LEVEL_DEBUG, "connectivity CB run");
-	bool ok = (rmw_uros_ping_agent(50, 1) == RCL_RET_OK);
+	bool ok = (rmw_uros_ping_agent(25, 1) == RCL_RET_OK);
 	gpio_put(LED_PIN, ok);
 	if (!ok)
 	{
@@ -236,10 +236,6 @@ int main()
 {
 	// init uart0 debugging iface
 	uart_setup();
-	char *ver_str = malloc(40);
-	snprintf(ver_str, 40, "--Robot Software Version %s--", VERSION);
-	uart_log(LEVEL_INFO, ver_str);
-	free(ver_str);
 	if (watchdog_caused_reboot())
 	{
 		uart_log(LEVEL_WARN, "Rebooted by watchdog!");
@@ -288,8 +284,7 @@ int main()
 		{
 			uart_log(LEVEL_ERROR, "Cannot contact USB Serial Agent! Bailing!");
 			// wait for watchdog to reset board
-			while (1)
-				;
+			die();
 		}
 	}
 

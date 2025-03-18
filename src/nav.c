@@ -9,6 +9,7 @@
 #include "controls.h"
 #include "tunables.h"
 #include "nav.h"
+#include "pico/malloc.h"
 
 OdomState *ods_a;
 OdomState *ods_b;

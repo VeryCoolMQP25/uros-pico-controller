@@ -48,6 +48,7 @@ void set_pid(bool);
 bool do_drivetrain_pid_v(struct repeating_timer*);
 
 void run_pid(Motor*, PIDController*);
+uint64_t get_last_pid_update();
 
 DriveMode drive_mode_from_ros();
 void lift_timeout_check();
