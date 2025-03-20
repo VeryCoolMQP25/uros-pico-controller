@@ -17,7 +17,8 @@
 
 #define DT_ENCODER_PPM_L	25530
 #define DT_ENCODER_PPM_R    25024
-#define MOTOR_POWER_MAX	    75
+#define MOTOR_POWER_MAX	    100
+#define MOTOR_DEADZONE	    10
 
 #define DRIVETRAIN_TIMEOUT 200000 //microseconds
 

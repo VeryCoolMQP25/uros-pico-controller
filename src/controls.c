@@ -136,7 +136,7 @@ void run_pid(Motor *motor, PIDController *pid)
 		error = pid->target - motor->velocity;
 		pid->integral += error * delta_time_s;
 		// reset integral when stopping
-		if (fabs(error) < pid->tolerance && fabs(pid->target) < 2.0*pid->tolerance){
+		if (fabs(error) < pid->tolerance && fabs(pid->target) < 0.01){
 			pid->integral = 0.0;
 		}
 		if (pid->integral > PID_DT_I_CAP)
