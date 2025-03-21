@@ -6,6 +6,7 @@
 #include <math.h>
 #include "actuators.h"
 #include "pico/stdlib.h"
+#include "pico/malloc.h"
 #include "uart_logging.h"
 #include "controls.h"
 #include "tunables.h"
@@ -76,7 +77,7 @@ void update_motor_encoders(){
 	update_motor_encoder(&drivetrain_right);
 	update_odometry();
 }
-
+char twist_message[50];
 void twist_callback(const void *msgin)
 {
 	const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
@@ -85,6 +86,9 @@ void twist_callback(const void *msgin)
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
 	last_twist_msg = time_us_64();
+	snprintf(twist_message, 50, "Twist: L: %f, R: %f", pid_v_left.target, pid_v_right.target);
+	uart_log_nonblocking(LEVEL_DEBUG, twist_message);
+
 }
 
 void lift_callback(const void *msgin)
