@@ -19,8 +19,10 @@ static PIDController pid_lift;
 static DriveMode drive_mode_global = dm_halt;
 unsigned long last_twist_msg = 0;
 unsigned long last_lift_msg = 0;
+unsigned long last_pid_cb_run = 0;
 bool do_pid_debug = false;
 bool do_pid = false;
+
 
 void pid_setup()
 {
@@ -79,10 +81,7 @@ void twist_callback(const void *msgin)
 {
 	const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
 	float linear = msg->linear.x;	// m/s
-	float angular = msg->angular.z; // rad/se
-	if (abs(liner) < 0.001){
-		angular *= 3;
-	}
+	float angular = msg->angular.z; // rad/sec
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
 	last_twist_msg = time_us_64();
@@ -114,15 +113,24 @@ void set_pid(bool setpoint){
 
 bool do_drivetrain_pid_v(__unused struct repeating_timer *tmr)
 {
+	static uint8_t led_state = 0;
+	static bool led_lit = false;
+	last_pid_cb_run = time_us_64();
 	if (do_pid){
 		run_pid(&drivetrain_left, &pid_v_left);
 		run_pid(&drivetrain_right, &pid_v_right);
+	}
+	gpio_put(LED_PIN, 0);
+	if (led_state++ >= 3){
+		led_state = 0;
+		gpio_put(LED_PIN, led_lit);
+		led_lit = !led_lit;
 	}
 	return 1; // instruct timer to keep repeating
 }
 
 uint64_t get_last_pid_update(){
-	return pid_v_right.last_tick_us;
+	return last_pid_cb_run;
 }
 
 void run_pid(Motor *motor, PIDController *pid)
@@ -204,6 +212,8 @@ DriveMode drive_mode_from_ros()
 			uart_log(LEVEL_DEBUG, asdf);
 			drivetrain_left.position = 0.0;
 			drivetrain_right.position = 0.0;
+			pid_v_left.integral = 0.0;
+			pid_v_right.integral = 0.0;
 		}
 		last = dm_halt;
 		return dm_halt;

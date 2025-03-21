@@ -45,16 +45,9 @@ void core1task()
 	else {
 		uart_log(LEVEL_INFO, "Started recurring PID interrupt timer");
 	}
+	sleep_ms(5);
 	while (true)
 	{
-		// if (time_us_64() - get_last_pid_update() > 30000){
-		// 	uart_log(LEVEL_ERROR, "PID update failed! Attempting restart");
-		// 	alarm_pool_destroy(pid_pool);
-		// 	pid_pool = alarm_pool_create_with_unused_hardware_alarm(1);
-		// 	if (!alarm_pool_add_repeating_timer_ms(pid_pool, 15, do_drivetrain_pid_v, NULL, pid_timer)){
-		// 		continue;
-		// 	}
-		// }
         core1_flag = 1;
         core1_stage = 1;
 	    if(do_core1_healthcheck){
@@ -161,7 +154,7 @@ void check_connectivity(rcl_timer_t *timer, int64_t last_call_time)
     }
 	// uart_log(LEVEL_DEBUG, "connectivity CB run");
 	bool ok = (rmw_uros_ping_agent(25, 1) == RCL_RET_OK);
-	gpio_put(LED_PIN, ok);
+
 	if (!ok)
 	{
 		drive_mode = dm_halt;
