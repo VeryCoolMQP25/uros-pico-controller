@@ -64,6 +64,7 @@ void core1task()
 		{
 		case dm_halt:
 			set_pid(false);
+			reset_integral();
 			if (motor_kill_ctr++ < 500)
 			{
 				set_motor_power(&drivetrain_left, 0);

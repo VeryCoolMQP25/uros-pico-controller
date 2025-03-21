@@ -43,6 +43,8 @@ void lift_callback(const void*);
 
 void set_lift_power(int pwr);
 
+void reset_integral();
+
 void set_pid(bool);
 
 bool do_drivetrain_pid_v(struct repeating_timer*);

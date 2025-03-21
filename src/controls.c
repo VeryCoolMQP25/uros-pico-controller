@@ -147,24 +147,18 @@ void run_pid(Motor *motor, PIDController *pid)
 		error = pid->target - motor->velocity;
 		pid->integral += error * delta_time_s;
 		// reset integral when stopping
-		if (fabs(error) < pid->tolerance && fabs(pid->target) < 0.01){
+		if (fabs(error) < pid->tolerance && fabs(pid->target) < 2.0*pid->tolerance){
 			pid->integral = 0.0;
 		}
-		if (pid->integral > PID_DT_I_CAP)
+		if (fabs(pid->integral) > PID_DT_I_CAP)
 		{
 			if (printctr > 5){
 				uart_log_nonblocking(LEVEL_INFO, "Capping integral");
 			}
-			pid->integral = PID_DT_I_CAP;
+			pid->integral = PID_DT_I_CAP * (pid->integral / fabs(pid->integral));
 		}
 		break;
 	case pid_position:
-		error = pid->target - motor->position;
-		if (fabs(pid->target) < PID_LOSPEED)
-		{
-			// increase error on low speeds
-			error *= 2;
-		}
 		pid->integral += error * delta_time_s;
 		break;
 	default:
@@ -197,6 +191,17 @@ void run_pid(Motor *motor, PIDController *pid)
 	set_motor_power(motor, output);
 }
 
+void reset_integral(){
+	pid_v_left.integral = 0.0;
+	pid_v_right.integral = 0.0;
+	drivetrain_left.position = 0.0;
+	drivetrain_right.position = 0.0;
+	pid_v_left.target = 0.0;
+	pid_v_right.target = 0.0;
+	pid_v_left.previous_error = 0.0;
+	pid_v_right.previous_error = 0.0;
+}
+
 DriveMode drive_mode_from_ros()
 {
 	static DriveMode last = dm_halt;
@@ -210,10 +215,6 @@ DriveMode drive_mode_from_ros()
 			char asdf[64];
 			snprintf(asdf, 64, "Dist. Since last timeout: L: %f, R: %f", drivetrain_left.position, drivetrain_right.position);
 			uart_log(LEVEL_DEBUG, asdf);
-			drivetrain_left.position = 0.0;
-			drivetrain_right.position = 0.0;
-			pid_v_left.integral = 0.0;
-			pid_v_right.integral = 0.0;
 		}
 		last = dm_halt;
 		return dm_halt;
