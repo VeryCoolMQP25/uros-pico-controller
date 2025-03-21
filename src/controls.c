@@ -79,7 +79,10 @@ void twist_callback(const void *msgin)
 {
 	const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
 	float linear = msg->linear.x;	// m/s
-	float angular = msg->angular.z; // rad/s
+	float angular = msg->angular.z; // rad/se
+	if (abs(liner) < 0.001){
+		angular *= 3;
+	}
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
 	last_twist_msg = time_us_64();
@@ -149,6 +152,11 @@ void run_pid(Motor *motor, PIDController *pid)
 		break;
 	case pid_position:
 		error = pid->target - motor->position;
+		if (fabs(pid->target) < PID_LOSPEED)
+		{
+			// increase error on low speeds
+			error *= 2;
+		}
 		pid->integral += error * delta_time_s;
 		break;
 	default:

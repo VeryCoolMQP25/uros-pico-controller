@@ -61,9 +61,9 @@ bool set_motor_power(Motor *motor, int power)
 		ok = false;
 	}
 	// boost commands near zero (but not zero!) to overcome deadzone
-	else if (power && abs(power) < MOTOR_DEADZONE)
+	else if (power && abs(power) <= MOTOR_DEADZONE)
 	{
-		power = MOTOR_DEADZONE;
+		power = MOTOR_DEADZONE * (power/abs(power));
 	}
 	int setpoint = (TALON_DEADCTR + power * (TALON_FULL_FWD - TALON_DEADCTR) / 100);
 	if (setpoint > TALON_FULL_FWD || setpoint < TALON_FULL_REV)
