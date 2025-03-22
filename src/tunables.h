@@ -16,7 +16,9 @@
 #define MOTOR_DEADZONE	    12
 
 #define ROTATE_INPLACE_THRESHOLD 0.1 //m/s
-#define ROTATE_INPLACE_MULT 1.5
+#define ROTATE_INPLACE_MULT 1.75
+
+#define BATTERY_OFF_THRESH 2.0 
 
 #define DRIVETRAIN_TIMEOUT 200000 //microseconds
 
