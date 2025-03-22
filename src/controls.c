@@ -16,7 +16,6 @@
 // globals
 static PIDController pid_v_left;
 static PIDController pid_v_right;
-static PIDController pid_lift;
 static DriveMode drive_mode_global = dm_halt;
 unsigned long last_twist_msg = 0;
 unsigned long last_lift_msg = 0;
@@ -29,7 +28,6 @@ void pid_setup()
 {
 	pid_v_left = init_pid_control(PID_DT_V_KP, PID_DT_V_KI, PID_DT_V_KD, PID_DT_TOL, pid_velocity);
 	pid_v_right = init_pid_control(PID_DT_V_KP, PID_DT_V_KI, PID_DT_V_KD, PID_DT_TOL, pid_velocity);
-	pid_lift = init_pid_control(PID_LFT_KP, PID_LFT_KI, PID_LFT_KD, PID_LFT_TOL, pid_position);
 }
 /* change PID values in runtime
 */
@@ -83,6 +81,16 @@ void twist_callback(const void *msgin)
 	const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
 	float linear = msg->linear.x;	// m/s
 	float angular = msg->angular.z; // rad/sec
+	// boost angular velocity when rotating in place
+	if (fabs(linear) < ROTATE_INPLACE_THRESHOLD)
+	{
+		pid_v_right.Ki = PID_DT_V_KI * ROTATE_INPLACE_MULT;
+		pid_v_left.Ki = PID_DT_V_KI * ROTATE_INPLACE_MULT;
+	}
+	else {
+		pid_v_right.Ki = PID_DT_V_KI;
+		pid_v_left.Ki = PID_DT_V_KI;
+	}
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
 	last_twist_msg = time_us_64();
