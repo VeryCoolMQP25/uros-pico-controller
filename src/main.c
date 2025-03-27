@@ -17,8 +17,6 @@
 #include "nav.h"
 #include "sensors.h"
 
-// version numbering: <term>-<day>.ver
-#define VERSION "B-53.3.1"
 #define RCL_CONTEXT_COUNT 6
 
 // globals

@@ -75,7 +75,7 @@ void update_motor_encoders(){
 	update_motor_encoder(&drivetrain_right);
 	update_odometry();
 }
-char twist_message[50];
+
 void twist_callback(const void *msgin)
 {
 	const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
@@ -98,9 +98,6 @@ void twist_callback(const void *msgin)
 	}
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
-	snprintf(twist_message, 50, "Twist: L: %f, R: %f", pid_v_left.target, pid_v_right.target);
-	uart_log_nonblocking(LEVEL_DEBUG, twist_message);
-
 }
 
 void lift_callback(const void *msgin)
@@ -154,7 +151,11 @@ void run_pid(Motor *motor, PIDController *pid)
 	static unsigned short printctr = 0;
 	uint64_t curtime = time_us_64();
 	float delta_time_s = (curtime - pid->last_tick_us) / 1000000.0;
-	float delta_time_s_safe = (delta_time_s > 1e-6) ? delta_time_s : 1e-6;
+	if (delta_time_s < 1e-6 || delta_time_s > 0.1)
+	{
+		uart_log(LEVEL_WARN, "PID delta time out of bounds!");
+		delta_time_s = 1e-6;
+	}
 	pid->last_tick_us = curtime;
 	float error;
 	switch (pid->mode)
@@ -184,7 +185,7 @@ void run_pid(Motor *motor, PIDController *pid)
 
 	float cur_P = pid->Kp * error;
 	float cur_I = pid->Ki * pid->integral;
-	float cur_D = pid->Kd * ((error - pid->previous_error) / delta_time_s_safe);
+	float cur_D = pid->Kd * ((error - pid->previous_error) / delta_time_s);
 
 	// PID output
 	int output = 100 * (cur_P + cur_I + cur_D);
