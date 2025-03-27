@@ -67,6 +67,7 @@ PIDController init_pid_control(float Kp, float Ki, float Kd, float tolerance, PI
 	controller.tolerance = tolerance;
 	controller.mode = pmode;
 	controller.last_tick_us = time_us_64();
+	critical_section_init(&controller.cs);
 	return controller;
 }
 
@@ -82,22 +83,29 @@ void twist_callback(const void *msgin)
 	float linear = msg->linear.x;	// m/s
 	float angular = msg->angular.z; // rad/sec
 	last_twist_msg = time_us_64();
+	critical_section_enter_blocking(&pid_v_right.cs);
+	critical_section_enter_blocking(&pid_v_left.cs);
 	// boost angular velocity when rotating in place
 	if (fabs(linear) < ROTATE_INPLACE_THRESHOLD)
 	{
 		pid_v_right.Ki = PID_DT_V_KI * ROTATE_INPLACE_IMULT;
-		pid_v_left.Ki = PID_DT_V_KI * ROTATE_INPLACE_IMULT;
-		pid_v_left.Kp = PID_DT_V_KP * ROTATE_INPLACE_PMULT;
 		pid_v_right.Kp = PID_DT_V_KP * ROTATE_INPLACE_PMULT;
+
+		pid_v_left.Ki = PID_DT_V_KI * ROTATE_INPLACE_IMULT;
+		pid_v_left.Kp = PID_DT_V_KP * ROTATE_INPLACE_PMULT;		
 	}
 	else {
 		pid_v_right.Ki = PID_DT_V_KI;
+		pid_v_right.Kp = PID_DT_V_KP;
+		
 		pid_v_left.Ki = PID_DT_V_KI;
 		pid_v_left.Kp = PID_DT_V_KP;
-		pid_v_right.Kp = PID_DT_V_KP;
 	}
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
+	critical_section_exit(&pid_v_left.cs);
+	
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
+	critical_section_exit(&pid_v_right.cs);
 }
 
 void lift_callback(const void *msgin)
@@ -156,6 +164,7 @@ void run_pid(Motor *motor, PIDController *pid)
 		uart_log(LEVEL_WARN, "PID delta time out of bounds!");
 		delta_time_s = 1e-6;
 	}
+	critical_section_enter_blocking(&pid->cs);
 	pid->last_tick_us = curtime;
 	float error;
 	switch (pid->mode)
@@ -180,6 +189,7 @@ void run_pid(Motor *motor, PIDController *pid)
 		break;
 	default:
 		uart_log(LEVEL_ERROR, "Invalid PID mode!");
+		critical_section_exit(&pid->cs);
 		return;
 	}
 
@@ -205,6 +215,7 @@ void run_pid(Motor *motor, PIDController *pid)
 		printctr = 0;
 	}
 	pid->previous_error = error;
+	critical_section_exit(&pid->cs);
 	set_motor_power(motor, output);
 }
 
@@ -217,6 +228,8 @@ void reset_integral(){
 	pid_v_right.target = 0.0;
 	pid_v_left.previous_error = 0.0;
 	pid_v_right.previous_error = 0.0;
+	pid_v_left.last_tick_us = time_us_64();
+	pid_v_right.last_tick_us = time_us_64();
 }
 
 DriveMode drive_mode_from_ros()

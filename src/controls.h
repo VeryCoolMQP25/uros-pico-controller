@@ -5,6 +5,7 @@
 #include "actuators.h"
 #include "message_types.h"
 #include "tunables.h"
+#include "pico/multicore.h"
 
 typedef enum {
 	dm_raw,
@@ -27,6 +28,7 @@ typedef struct {
 	float target;
 	PIDMode mode;
 	uint64_t last_tick_us;
+	critical_section_t cs;
 } PIDController;
 
 void pid_setup();
