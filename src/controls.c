@@ -81,19 +81,23 @@ void twist_callback(const void *msgin)
 	const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
 	float linear = msg->linear.x;	// m/s
 	float angular = msg->angular.z; // rad/sec
+	last_twist_msg = time_us_64();
 	// boost angular velocity when rotating in place
 	if (fabs(linear) < ROTATE_INPLACE_THRESHOLD)
 	{
-		pid_v_right.Ki = PID_DT_V_KI * ROTATE_INPLACE_MULT;
-		pid_v_left.Ki = PID_DT_V_KI * ROTATE_INPLACE_MULT;
+		pid_v_right.Ki = PID_DT_V_KI * ROTATE_INPLACE_IMULT;
+		pid_v_left.Ki = PID_DT_V_KI * ROTATE_INPLACE_IMULT;
+		pid_v_left.Kp = PID_DT_V_KP * ROTATE_INPLACE_PMULT;
+		pid_v_right.Kp = PID_DT_V_KP * ROTATE_INPLACE_PMULT;
 	}
 	else {
 		pid_v_right.Ki = PID_DT_V_KI;
 		pid_v_left.Ki = PID_DT_V_KI;
+		pid_v_left.Kp = PID_DT_V_KP;
+		pid_v_right.Kp = PID_DT_V_KP;
 	}
 	pid_v_left.target = linear - (WHEELBASE_M * angular) / 2;
 	pid_v_right.target = linear + (WHEELBASE_M * angular) / 2;
-	last_twist_msg = time_us_64();
 	snprintf(twist_message, 50, "Twist: L: %f, R: %f", pid_v_left.target, pid_v_right.target);
 	uart_log_nonblocking(LEVEL_DEBUG, twist_message);
 
@@ -216,22 +220,12 @@ void reset_integral(){
 
 DriveMode drive_mode_from_ros()
 {
-	static DriveMode last = dm_halt;
 	// disable timeout if in PID debug mode
 
-	if (time_us_64() - last_twist_msg > DRIVETRAIN_TIMEOUT && !do_pid_debug)
+	if (time_us_64() - last_twist_msg > DRIVETRAIN_TIMEOUT)
 	{
-		if (last != dm_halt)
-		{
-			uart_log(LEVEL_WARN, "Drivetrain timeout exceeded!!");
-			char asdf[64];
-			snprintf(asdf, 64, "Dist. Since last timeout: L: %f, R: %f", drivetrain_left.position, drivetrain_right.position);
-			uart_log(LEVEL_DEBUG, asdf);
-		}
-		last = dm_halt;
 		return dm_halt;
 	}
-	last = dm_twist;
 	return dm_twist;
 }
 

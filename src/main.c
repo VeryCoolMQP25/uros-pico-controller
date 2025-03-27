@@ -28,6 +28,7 @@ uint8_t do_encoder_debug = 0;
 uint8_t do_core1_healthcheck = 0;
 int core1_stage = 0;
 uint8_t core1_flag = 1;
+float resting_voltage = 0.0;
 
 void core1task()
 {
@@ -55,7 +56,8 @@ void core1task()
 			do_core1_healthcheck = false;
 		}
 		drive_mode = drive_mode_from_ros();
-		if (get_battery_voltage() < BATTERY_OFF_THRESH){
+		float battery_voltage = get_battery_voltage();
+		if (battery_voltage < BATTERY_OFF_THRESH){
 			// robot is e-stopped
 			drive_mode = dm_halt;
 			uart_log(LEVEL_INFO, "Halting due to low bus voltage.");
@@ -70,6 +72,7 @@ void core1task()
 		case dm_halt:
 			set_pid(false);
 			reset_integral();
+			resting_voltage = battery_voltage;
 			if (motor_kill_ctr++ < 500)
 			{
 				set_motor_power(&drivetrain_left, 0);
@@ -131,7 +134,7 @@ void publish_encoder(rcl_timer_t *timer, int64_t last_call_time)
 
 void publish_battery(rcl_timer_t *timer, int64_t last_call_time)
 {
-    battery_message.data = get_battery_voltage();
+    battery_message.data = resting_voltage;
 	if (rcl_publish(&battery_publisher, &battery_message, NULL))
 	{
 		uart_log(LEVEL_WARN, "Battery publish failed!");
@@ -146,8 +149,7 @@ void check_connectivity(rcl_timer_t *timer, int64_t last_call_time)
         core1_fail_count++;
         if (core1_fail_count == 5){
             uart_log(LEVEL_ERROR, "Core1 failed! Restarting...");
-            multicore_reset_core1();
-            multicore_launch_core1(core1task);
+            die();
         }
 		else if (core1_fail_count > 6){
 			uart_log(LEVEL_ERROR, "Core1 failed to restart! Emergency system restart.");
@@ -246,7 +248,7 @@ int main()
 		uart_log(LEVEL_DEBUG, "Boot was clean.");
 	}
 	uart_log(LEVEL_INFO, "Starting watchdog...");
-	watchdog_enable(300, 1);
+	watchdog_enable(100, 1);
 	// init USB serial comms
 	rmw_uros_set_custom_transport(
 		true,
@@ -302,7 +304,7 @@ int main()
 	create_timer_callback(&executor, &support, 10, publish_encoder);
 	create_timer_callback(&executor, &support, 200, check_connectivity);
 	create_timer_callback(&executor, &support, 800, uart_input_handler);
-	create_timer_callback(&executor, &support, 2500, publish_battery);
+	create_timer_callback(&executor, &support, 1500, publish_battery);
 	watchdog_update();
 
 	// --create publishers--

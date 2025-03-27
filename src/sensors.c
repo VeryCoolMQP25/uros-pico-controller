@@ -86,7 +86,18 @@ bool get_lift_hardstop()
 
 float get_battery_voltage()
 {
+	static uint16_t readings[10] = {0};
+	static int idx = 0;
     adc_select_input(0); // ensure batt input is selected
-	uint16_t raw = adc_read();
+	readings[idx++] = adc_read();
+	if (idx == 10)
+	{
+		idx = 0;
+	}
+	uint32_t raw = 0;
+	for (int i = 0; i < 10; i++)
+	{
+		raw += readings[i];
+	}
 	return raw * voltage_convert_ratio;
 }
