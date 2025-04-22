@@ -55,6 +55,11 @@ void core1task()
 		}
 		drive_mode = drive_mode_from_ros();
 		float battery_voltage = get_battery_voltage();
+		if (battery_voltage < BATTERY_OFF_THRESH){
+			// robot is e-stopped
+			drive_mode = dm_halt;
+			uart_log(LEVEL_INFO, "Halting due to low bus voltage.");
+		}
 		core1_stage = 2;
 		lift_timeout_check();
 		core1_stage = 3;
