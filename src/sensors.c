@@ -99,5 +99,5 @@ float get_battery_voltage()
 	{
 		raw += readings[i];
 	}
-	return raw * voltage_convert_ratio;
+	return (raw * voltage_convert_ratio)/10.0f;
 }
